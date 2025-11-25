@@ -143,13 +143,37 @@ def retrieve_relevant_chunks(query: str, top_k: int = 5) -> List[Dict[str, Any]]
 # =========================
 
 def load_urls_from_excel(path: str) -> List[str]:
+    """
+    Load URLs from Excel.
+    - If there is a 'url' column, use it.
+    - Otherwise, use the first column in the sheet (e.g. 'Unnamed: 0').
+    This way, the app won't crash just because the column name is different.
+    """
     if not os.path.exists(path):
-        raise RuntimeError(f"Excel file not found at: {path}")
-    df = pd.read_excel(path)
-    if "url" not in df.columns:
-        raise RuntimeError("Excel file must contain a 'url' column.")
-    urls = df["url"].dropna().unique().tolist()
+        print(f"[Sally] WARNING: Excel file not found at: {path}")
+        return []
+
+    try:
+        df = pd.read_excel(path)
+    except Exception as e:
+        print(f"[Sally] ERROR reading Excel file: {e}")
+        return []
+
+    if df.empty:
+        print("[Sally] WARNING: Excel file is empty.")
+        return []
+
+    if "url" in df.columns:
+        col = "url"
+    else:
+        # fall back to the first column (your file uses 'Unnamed: 0')
+        col = df.columns[0]
+        print(f"[Sally] INFO: Using first column '{col}' for URLs.")
+
+    urls = df[col].dropna().astype(str).unique().tolist()
+    print(f"[Sally] Loaded {len(urls)} URLs from Excel.")
     return urls
+
 
 
 def crawl_and_build_index() -> None:
@@ -432,3 +456,4 @@ def sally_widget():
 </html>
     """
     return HTMLResponse(content=html)
+
