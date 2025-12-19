@@ -92,6 +92,10 @@ def load_urls_from_excel(path: str) -> List[str]:
         print(f"Error reading Excel file: {e}")
         return []
 
+def get_embeddings(texts: List[str]) -> List[List[float]]:
+    resp = openai.embeddings.create(model=EMBEDDING_MODEL, input=texts)
+    return [d.embedding for d in resp.data]
+
 
 def crawl_and_build_index() -> None:
     global KNOWLEDGE_INDEX
@@ -118,4 +122,5 @@ def crawl_and_build_index() -> None:
     
     KNOWLEDGE_INDEX = new_index
     print(f"[Sally] Indexing complete: {len(KNOWLEDGE_INDEX)} chunks ready.")
+
 
