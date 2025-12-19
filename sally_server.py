@@ -80,3 +80,28 @@ def chunk_text(text: str, chunk_size: int = 1800, overlap: int = 200) -> List[st
         end = min(len(text), start + chunk_size)
         chunks.append(text[start:end])
         start += chunk_size - overlap
+def crawl_and_build_index() -> None:
+    global KNOWLEDGE_INDEX
+    urls = load_urls_from_excel(URLS_EXCEL_PATH)
+    print(f"[Sally] Crawling {len(urls)} URLs...")
+    new_index = []
+    for url in urls:
+        try:
+            res = requests.get(url, timeout=15)
+            text = clean_text(res.text)
+            if not text:
+                continue
+            chunks = chunk_text(text)
+            embeddings = get_embeddings(chunks)
+            for ch, emb in zip(chunks, embeddings):
+                new_index.append({
+                    "id": str(uuid.uuid4()),
+                    "url": url,
+                    "text": ch,
+                    "embedding": emb
+                })
+        except Exception as e:
+            print(f"Error fetching {url}: {e}")
+    
+    KNOWLEDGE_INDEX = new_index
+    print(f"[Sally] Indexing complete: {len(KNOWLEDGE_INDEX)} chunks ready.")
