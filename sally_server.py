@@ -80,6 +80,19 @@ def chunk_text(text: str, chunk_size: int = 1800, overlap: int = 200) -> List[st
         end = min(len(text), start + chunk_size)
         chunks.append(text[start:end])
         start += chunk_size - overlap
+def load_urls_from_excel(path: str) -> List[str]:
+    if not os.path.exists(path):
+        print(f"Error: File {path} not found.")
+        return []
+    try:
+        df = pd.read_excel(path)
+        col = "url" if "url" in df.columns else df.columns[0]
+        return df[col].dropna().astype(str).unique().tolist()
+    except Exception as e:
+        print(f"Error reading Excel file: {e}")
+        return []
+
+
 def crawl_and_build_index() -> None:
     global KNOWLEDGE_INDEX
     urls = load_urls_from_excel(URLS_EXCEL_PATH)
@@ -105,3 +118,4 @@ def crawl_and_build_index() -> None:
     
     KNOWLEDGE_INDEX = new_index
     print(f"[Sally] Indexing complete: {len(KNOWLEDGE_INDEX)} chunks ready.")
+
