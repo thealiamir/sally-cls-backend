@@ -93,7 +93,12 @@ def load_urls_from_excel(path: str) -> List[str]:
         return []
 
 def get_embeddings(texts: List[str]) -> List[List[float]]:
-    resp = openai.embeddings.create(model=EMBEDDING_MODEL, input=texts)
+    # This checks for empty text so OpenAI doesn't error out
+    valid_texts = [t for t in texts if t.strip()]
+    if not valid_texts:
+        return []
+        
+    resp = openai.embeddings.create(model=EMBEDDING_MODEL, input=valid_texts)
     return [d.embedding for d in resp.data]
 
 
@@ -104,8 +109,9 @@ def crawl_and_build_index() -> None:
     new_index = []
     for url in urls:
         try:
-            res = requests.get(url, timeout=15)
-            text = clean_text(res.text)
+           embeddings = get_embeddings(chunks)
+        if not embeddings:
+            continue
             if not text:
                 continue
             chunks = chunk_text(text)
@@ -122,5 +128,6 @@ def crawl_and_build_index() -> None:
     
     KNOWLEDGE_INDEX = new_index
     print(f"[Sally] Indexing complete: {len(KNOWLEDGE_INDEX)} chunks ready.")
+
 
 
